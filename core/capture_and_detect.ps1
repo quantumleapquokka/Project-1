@@ -2,16 +2,23 @@
 param (
     [ValidateRange(1, 1440)][int]$Iteration = 3,
     [ValidateRange(15, 300)][int]$WaitTime = 30,
-    [switch]$ListResults
+    [switch]$ListResults,
+    [string]$Frequency,
+    [string]$CameraURL,
+    [string]$FolderPath
 )
 
+Write-Host "Running detection on $CameraURL every $Frequency seconds..."
+Write-Host "Saving output to $FolderPath"
+
 # --- Configuration ---
-$cameraUrl = "http://demo.customer.roboticscats.com:55758/axis-cgi/jpg/image.cgi?resolution=1920x1080"
 $username = "root"
 $password = "Cashflow108!"
-$outputFile = "C:\RoboticsCats\tester1.jpg" #NOTE: REPLACE WITH LOCAL PATH
+$cameraUrl = $CameraURL
+$outputFile = Join-Path $FolderPath "capture.jpg"
+$responsePath = Join-Path $FolderPath "last-response.json"
+$resultsFile = Join-Path $FolderPath "results.txt"
 $apiUrl = "https://lax.pop.roboticscats.com/api/detects?apiKey=6b4b4551f987d18b70ca53c1975c4fd3"
-$resultsFile = "C:\RoboticsCats\results.txt" #NOTE: REPLACE WITH LOCAL PATH
 
 # --- Initialize ---
 $startTime = Get-Date
@@ -45,7 +52,6 @@ for ($i = 1; $i -le $Iteration; $i++) {
         try {
             $response = Invoke-RestMethod -Uri $apiUrl -Method Post -InFile $outputFile -ContentType "image/jpeg"
             # Optional: Save API response to file for inspection
-            $responsePath = "C:\RoboticsCats\last-response.json"
             $response | ConvertTo-Json -Depth 10 | Set-Content -Path $responsePath
 
             # Also optionally print to console

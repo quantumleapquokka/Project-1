@@ -1,0 +1,17 @@
+LookOut Connect Results
+-----------------------
+[06/15/2025 13:00:25] Iteration 1: Image capture failed. Exception: A parameter cannot be found that matches parameter name 'AllowUnencryptedAuthentication'.
+[06/15/2025 13:00:25] Iteration 2: Image capture failed. Exception: A parameter cannot be found that matches parameter name 'AllowUnencryptedAuthentication'.
+[06/15/2025 13:00:25] Iteration 3: Image capture failed. Exception: A parameter cannot be found that matches parameter name 'AllowUnencryptedAuthentication'.
+Summary:
+---------
+Start: 06/15/2025 13:00:25
+End: 06/15/2025 13:00:25
+Iterations: 3
+Successes: 0
+Interval (s): 30
+
+Processing Times (s):
+- Avg: 0
+- Max: 0
+- Min: 0
