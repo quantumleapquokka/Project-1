@@ -36,7 +36,6 @@ for ($i = 1; $i -le $Iteration; $i++) {
         Invoke-WebRequest -Uri $cameraUrl `
             -Credential (New-Object System.Management.Automation.PSCredential($username, (ConvertTo-SecureString $password -AsPlainText -Force))) `
             -OutFile $outputFile `
-            -AllowUnencryptedAuthentication
     }
     catch {
         $captureSnapshot = $false
