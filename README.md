@@ -30,3 +30,5 @@ python doneGUI.py
 - Folder Path: Where results and images should be saved
 - Frequency: How often to poll the camera
 - Camera Endpoint URL: A direct snapshot URL
+## Documemtation
+>Visit the [docs](https://link-url-here.org) folder in this repo to read further documentation for the project.
