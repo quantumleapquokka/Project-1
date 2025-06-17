@@ -4,7 +4,7 @@ param (
     [ValidateRange(15, 300)][int]$WaitTime = 30,
     [switch]$ListResults,
     [string]$Frequency,
-    [string]$CameraURL,
+    [string]$ApiURL,
     [string]$FolderPath
 )
 
@@ -14,11 +14,11 @@ Write-Host "Saving output to $FolderPath"
 # --- Configuration ---
 $username = "root"
 $password = "Cashflow108!"
-$cameraUrl = $CameraURL
+$cameraUrl = "http://demo.customer.roboticscats.com:55758/axis-cgi/jpg/image.cgi?resolution=1920x1080"
 $outputFile = Join-Path $FolderPath "capture.jpg"
 $responsePath = Join-Path $FolderPath "last-response.json"
 $resultsFile = Join-Path $FolderPath "results.txt"
-$apiUrl = "https://lax.pop.roboticscats.com/api/detects?apiKey=6b4b4551f987d18b70ca53c1975c4fd3"
+$apiUrl = $ApiURL # "https://lax.pop.roboticscats.com/api/detects?apiKey=6b4b4551f987d18b70ca53c1975c4fd3"
 
 # --- Initialize ---
 $startTime = Get-Date
@@ -36,11 +36,14 @@ for ($i = 1; $i -le $Iteration; $i++) {
         Invoke-WebRequest -Uri $cameraUrl `
             -Credential (New-Object System.Management.Automation.PSCredential($username, (ConvertTo-SecureString $password -AsPlainText -Force))) `
             -OutFile $outputFile `
+            -AllowUnencryptedAuthentication # IF USING EARLIER VERSION OF POWERSHELL (i.e. 5.1) IT WILL NOT WORK
     }
     catch {
         $captureSnapshot = $false
         Write-Error "Image capture failed on iteration $i"
-        Add-Content -Path $resultsFile -Value "[$(Get-Date)] Iteration ${i}: Image capture failed. Exception: $($_.Exception.Message)"
+        Write-Host "Exception Type: $($_.Exception.GetType().FullName)"
+        Write-Host "Message: $($_.Exception.Message)"
+        Write-Host "Stack Trace: $($_.Exception.StackTrace)"
         continue
     }
 

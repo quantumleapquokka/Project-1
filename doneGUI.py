@@ -80,7 +80,8 @@ class Frame1(tk.Frame):
     def run_powershell(self, folder_path, detection_freq, camera_url):
         try:
             subprocess.run([
-                "powershell.exe",
+                "pwsh.exe",     # FOR POWERSHELL VERSION 7.5.1 AND ABOVE
+                # "powershell.exe", # FOR EARLIER VERSION OF POWERSHELL
                 "-ExecutionPolicy", "Bypass",
                 "-File", "capture_and_detect.ps1",
                 "-FolderPath", folder_path,
