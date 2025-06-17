@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import subprocess
 
 camera_list = []
 frame1_list = []
@@ -46,7 +47,8 @@ class Frame1(tk.Frame):
             camera_list.append(camera)
             frame1_list.append(self)
             print("Camera added:", camera)
-            self.switch_to_frame2
+            self.run_powershell(folder_path, detection_freq, camera_url)
+            self.switch_to_frame2()
         else:
             print("Please complete all fields")
 
@@ -59,6 +61,21 @@ class Frame1(tk.Frame):
             print("Camera configuration is valid.")
         else:
             print("Please complete all fields.")
+
+    def run_powershell(self, folder_path, detection_freq, camera_url):
+        try:
+            subprocess.run([
+                "powershell.exe",
+                "-ExecutionPolicy", "Bypass",
+                "-File", "capture_and_detect.ps1",
+                "-FolderPath", folder_path,
+                "-Frequency", detection_freq,
+                "-CameraURL", camera_url
+            ], check=True)
+            print("PowerShell script executed successfully.")
+        except subprocess.CalledProcessError as e:
+            print("Error running PowerShell script:", e)
+
 
 class Frame2(tk.Frame):
     def __init__(self, parent, switch_to_frame1):
