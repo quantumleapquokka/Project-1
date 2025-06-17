@@ -146,10 +146,11 @@ class Frame2(tk.Frame):
 class Frame3(tk.Frame):
     """Frame3: ReadMe Page -- what's LConnect?"""
     """This frame provides additional information about the LConnect application."""
-    def __init__(self, parent, switch_to_frame1, switch_to_frame2):
+    def __init__(self, parent, switch_to_frame1, switch_to_frame2, switch_to_frame4):
         super().__init__(parent)
         self.switch_to_frame1 = switch_to_frame1
         self.switch_to_frame2 = switch_to_frame2
+        self.switch_to_frame4 = switch_to_frame4
         self.create_widgets()
 
     def create_widgets(self):
@@ -159,10 +160,11 @@ class Frame3(tk.Frame):
 
         tk.Button(self, text="Start to Camera Settings", width=20, command=self.switch_to_frame1).grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky='w')
         tk.Button(self, text="Check the Camera List", width=20, command=self.switch_to_frame2).grid(row=1, column=1,padx=10, pady=10, sticky='w')
-
+        
         self.readme_visible = False
         self.readme_button = tk.Button(self, text="What is LConnect? ▼", width=20, command=self.toggle_readme)
         self.readme_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky='w')
+        tk.Button(self, text="View Progress", width=20, command=self.switch_to_frame4).grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky='w')
 
         self.readme_detail = tk.Label(self, text=(
             "LConnect automates retrieval of images from multiple FTP folders,\n"
@@ -182,7 +184,39 @@ class Frame3(tk.Frame):
             self.readme_button.config(text="Hide Details ▲")
             self.readme_visible = True
 
+"""
+=======================================
+Add More for update 1.3
+=======================================
+add a different GUI to show regular (every 1 or 2 minutes) progresses of LConnect? 
+Example: how many images from each folder send to LookOut?
+"""
+class Frame4(tk.Frame):
+    """Frame4: Progress monitor checking how many images were sent in 2 minutes"""
+    def __init__(self, parent, switch_to_frame3):
+        super().__init__(parent)
+        self.switch_to_frame3 = switch_to_frame3  #back to home page
+        self.update_interval_seconds = 120
+        self.create_widgets()
         
+    def create_widgets(self):
+        title = tk.Label(self, text="LConnect Progress Monitor", font=("Arial", 18, "bold"))
+        title.pack(pady=10)
+
+        self.tree = ttk.Treeview(self, columns=("Folder","Time", "Images Sent"), show="headings")    #maybe we can add more columns from the summary
+        self.tree.heading("Time", text="Timestamp")
+        self.tree.heading("Folder", text="Camera Folder")
+        self.tree.heading("Images Sent", text="Images Sent")
+        self.tree.pack(padx=10, pady=10, fill='both', expand=True)
+"""
+=======================================
+Add More for update 1.3
+=======================================
+add a different GUI to show regular (every 1 or 2 minutes) progresses of LConnect? 
+Example: how many images from each folder send to LookOut?
+"""
+
+
 class LConnectApp:
     def __init__(self, root):
         self.root = root
@@ -192,10 +226,12 @@ class LConnectApp:
         self.frame1 = None
         self.frame2 = None
         self.frame3 = None
+        self.frame4 = None
 
         self.frame1 = Frame1(root, self.show_frame2, self.show_frame3)
         self.frame2 = Frame2(root, self.show_frame1, self.add_new_frame1)
-        self.frame3 = Frame3(root, self.show_frame1, self.show_frame2)
+        self.frame3 = Frame3(root, self.show_frame1, self.show_frame2, self.show_frame4)
+        self.frame4 = Frame4(root, self.show_frame3)
 
         for frame in (self.frame1, self.frame2, self.frame3):
             frame.grid(row=0, column=0, sticky='nsew')
@@ -220,6 +256,10 @@ class LConnectApp:
         self.frame1 = Frame1(self.root, self.show_frame2)
         self.frame1.grid(row=0, column=0, sticky='nsew')
         self.frame1.tkraise()
+    
+    def show_frame4(self):
+        self.frame2.update_camera_list()
+        self.frame4.tkraise()
 
 if __name__ == "__main__":
     root = tk.Tk()
