@@ -8,7 +8,7 @@ param (
     [string]$FolderPath
 )
 
-Write-Host "Running detection on $CameraURL every $Frequency seconds..."
+Write-Host "Running detection on $ApiURL every $Frequency seconds..."
 Write-Host "Saving output to $FolderPath"
 
 # --- Configuration ---
@@ -28,7 +28,8 @@ $captureTimes = @()
 $successTime = 0
 
 # --- Main Loop ---
-for ($i = 1; $i -le $Iteration; $i++) {
+$i = 1
+while ($true) {
     $captureSnapshot = $true
     $getStartTime = Get-Date
 
@@ -93,6 +94,7 @@ for ($i = 1; $i -le $Iteration; $i++) {
     }
 
     Start-Sleep -Seconds $sleepTime
+    $i++
 }
 
 # --- Final Stats ---
@@ -106,7 +108,7 @@ Summary:
 ---------
 Start: $startTime
 End: $endTime
-Iterations: $Iteration
+Iterations: $i
 Successes: $successTime
 Interval (s): $WaitTime
 

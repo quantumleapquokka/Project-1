@@ -21,7 +21,8 @@ class Frame1(tk.Frame):
         super().__init__(parent)   # Initialize Frame1
         self.switch_to_frame2 = switch_to_frame2   # Switch to Frame2
         self.switch_to_frame3 = switch_to_frame3   # Switch to Frame3
-        self.create_widgets()  # Create widgets for Frame1
+        self.ps_process = None
+        self.create_widgets()  # Create widgets for Frame1        
 
     def create_widgets(self):
         """Create and layout widgets for Frame1."""
@@ -44,11 +45,13 @@ class Frame1(tk.Frame):
         self.entry_url = tk.Entry(self, width=50)
         self.entry_url.grid(row=3, column=1, padx=10, pady=10)
 
-        # Buttons (Add + Check)
+        # Buttons (Add + Check + Stop)
         add_button = tk.Button(self, text="Add Camera", width=20, command=self.add_camera)
         add_button.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='w')
         list_button = tk.Button(self, text="Check the Camera List", width=20, command=self.switch_to_frame2)
         list_button.grid(row=4, column=1, padx=10, pady=10)
+        stop_button = tk.Button(self, text="Stop Monitoring", width=20, command=self.stop_powershell)
+        stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky='w')
 
     def add_camera(self):
         """Add a camera to the camera list."""
@@ -74,24 +77,30 @@ class Frame1(tk.Frame):
         camera_list.append(camera)  # Add camera to the global list
         frame1_list.append(self)    # Add camera to the frame1 list for later reference
         messagebox.showinfo("Camera Added", "Camera configuration has been successfully added.")
-        self.run_powershell(folder_path, detection_freq, camera_url)   # Run PowerShell script with the provided parameters
         self.switch_to_frame2()
+        self.run_powershell(folder_path, detection_freq, camera_url)   # Run PowerShell script with the provided parameters
+        
 
     def run_powershell(self, folder_path, detection_freq, camera_url):
         try:
-            subprocess.run([
-                "pwsh.exe",     # FOR POWERSHELL VERSION 7.5.1 AND ABOVE
-                # "powershell.exe", # FOR EARLIER VERSION OF POWERSHELL
+            self.ps_process = subprocess.Popen([
+                "pwsh.exe",  # or "powershell.exe" if using legacy version
                 "-ExecutionPolicy", "Bypass",
                 "-File", "capture_and_detect.ps1",
                 "-FolderPath", folder_path,
                 "-Frequency", detection_freq,
-                "-CameraURL", camera_url
-            ], check=True)
+                "-ApiURL", camera_url
+            ])
             print("PowerShell script executed successfully.")
         except subprocess.CalledProcessError as e:
             print("Error running PowerShell script:", e)
 
+    def stop_powershell(self):
+        if self.ps_process and self.ps_process.poll() is None:
+            self.ps_process.terminate()
+            print("PowerShell script terminated.")
+        else:
+            messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
 
 class Frame2(tk.Frame):
     """Frame2: for displaying the list of cameras and allowing users to edit or remove them."""
@@ -254,7 +263,7 @@ class LConnectApp:
     def add_new_frame1(self):
         if self.frame1:
             self.frame1.destroy()
-        self.frame1 = Frame1(self.root, self.show_frame2)
+        self.frame1 = Frame1(self.root, self.show_frame2, self.show_frame3)
         self.frame1.grid(row=0, column=0, sticky='nsew')
         self.frame1.tkraise()
     
