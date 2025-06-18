@@ -4,6 +4,7 @@ import re
 import webbrowser
 from tkinter import ttk, messagebox
 import subprocess
+from datetime import datetime
 camera_list = []
 frame1_list = []
 
@@ -275,10 +276,34 @@ class Frame4(tk.Frame):
         back_button.pack(pady=10)
 
     def update_camera_list(self):
-        """Update the camera list in the treeview."""
         self.tree.delete(*self.tree.get_children())
         for cam in camera_list:
-            self.tree.insert("", "end", values=(cam['name'], cam['last_detected'], cam['created_on'], cam['images_sent']))
+            results_path = os.path.join(cam["path"], "results.txt")
+            last_detected = "-"
+            created_on = "-"
+            images_sent = 0
+
+            if os.path.exists(results_path):
+                try:
+                    with open(results_path, "r") as f:
+                        lines = f.readlines()
+                        created_on = lines[0].strip() if lines else "-"
+                        for line in lines:
+                            match = re.match(r"\[(.*?)\]", line)
+                            if match:
+                                last_detected = match.group(1)
+                            if "Fire Detection FOUND!" in line or "No detection." in line:
+                                images_sent += 1
+                except Exception as e:
+                    print(f"Failed to read {results_path}: {e}")
+
+            cam["last_detected"] = last_detected
+            cam["created_on"] = created_on
+            cam["images_sent"] = images_sent
+
+            self.tree.insert("", "end", values=(cam["name"], last_detected, created_on, images_sent))
+        self.after(5000, self.update_camera_list)  # Update every 5 seconds
+
 
 class LConnectApp:
     def __init__(self, root):
