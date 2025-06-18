@@ -7,6 +7,7 @@ import subprocess
 from datetime import datetime
 camera_list = []
 frame1_list = []
+ps_processes = []
 
 """
 This is the GUI part for LookOut System Connection
@@ -109,6 +110,7 @@ class Frame1(tk.Frame):
                 "-Frequency", detection_freq,
                 "-ApiURL", camera_url
             ])
+            ps_processes.append(self.ps_process)
             print("PowerShell script executed successfully.")
         except subprocess.CalledProcessError as e:
             print("Error running PowerShell script:", e)
@@ -145,11 +147,15 @@ class Frame2(tk.Frame):
         self.update_camera_list()
 
     def stop_powershell(self):
-        """Stop the PowerShell script if it is running."""
-        if self.ps_process and self.ps_process.poll() is None:
-            self.ps_process.terminate()
-            print("PowerShell script terminated.")
-        else:
+        """Stop all PowerShell monitoring processes."""
+        global ps_processes
+        any_stopped = False
+        for p in ps_processes:
+            if p.poll() is None:
+                p.terminate()
+                any_stopped = True
+                print("PowerShell script terminated.")
+        if not any_stopped:
             messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
 
     def update_camera_list(self):
@@ -355,12 +361,14 @@ class LConnectApp:
         self.frame1.tkraise()
 
     def cleanup(self):
-        if self.frame1 is not None and hasattr(self.frame1, 'ps_process') and self.frame1.ps_process and self.frame1.ps_process.poll() is None:
-            try:
-                self.frame1.ps_process.terminate()
-                print("PowerShell script terminated on close.")
-            except Exception as e:
-                print("Error terminating PowerShell process:", e)
+        global ps_processes
+        for p in ps_processes:
+            if p and p.poll() is None:
+                try:
+                    p.terminate()
+                    print("PowerShell script terminated on close.")
+                except Exception as e:
+                    print("Error terminating PowerShell process:", e)
         self.root.destroy()
 
 if __name__ == "__main__":
