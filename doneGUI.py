@@ -64,8 +64,6 @@ class Frame1(tk.Frame):
         list_button.grid(row=4, column=1, padx=10, pady=10)
         home_button = tk.Button(self, text="↩ Back Home", width=20, command=self.switch_to_frame3)
         home_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky='w')
-        stop_button = tk.Button(self, text="Stop Monitoring", width=20, command=self.stop_powershell)
-        stop_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky='w')
 
     def add_camera(self):
         """Add a camera to the camera list."""
@@ -115,13 +113,6 @@ class Frame1(tk.Frame):
         except subprocess.CalledProcessError as e:
             print("Error running PowerShell script:", e)
 
-    def stop_powershell(self):
-        if self.ps_process and self.ps_process.poll() is None:
-            self.ps_process.terminate()
-            print("PowerShell script terminated.")
-        else:
-            messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
-
 class Frame2(tk.Frame):
     """Frame2: for displaying the list of cameras and allowing users to edit or remove them."""
     def __init__(self, parent, switch_to_frame1, switch_to_frame3, switch_to_frame4, add_new_frame1):
@@ -130,6 +121,7 @@ class Frame2(tk.Frame):
         self.switch_to_frame3 = switch_to_frame3
         self.add_new_frame1 = add_new_frame1
         self.switch_to_frame4 = switch_to_frame4
+        self.ps_process = None
         self.create_widgets()
 
     def create_widgets(self):
@@ -148,15 +140,26 @@ class Frame2(tk.Frame):
         tk.Button(self, text="Add a New Camera", command=self.add_new_frame1).grid(row=1, column=3, pady=10)
         tk.Button(self, text="↩ Back Home", command=self.switch_to_frame3).grid(row=2, column=0, pady=10)
         tk.Button(self, text="View Progress", command=self.switch_to_frame4).grid(row=2, column=1, pady=10)
+        tk.Button(self, text="Stop Monitoring 🛑", width=20, command=self.stop_powershell).grid(row=2, column=2, columnspan=2, padx=10, pady=10, sticky='w')
 
         self.update_camera_list()
-        
+
+    def stop_powershell(self):
+        """Stop the PowerShell script if it is running."""
+        if self.ps_process and self.ps_process.poll() is None:
+            self.ps_process.terminate()
+            print("PowerShell script terminated.")
+        else:
+            messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
+
     def update_camera_list(self):
+        """Update the camera list in the table."""
         self.table.delete(*self.table.get_children())
         for cam in camera_list:
             self.table.insert("", "end", values=(cam['name'], cam['path'], cam['frequency'], cam['url']))
 
     def edit_camera(self):
+       """Edit the selected camera."""
        selected = self.table.selection()
        if not selected:
         messagebox.showwarning("No Selection", "Please select a camera to edit.")
@@ -166,6 +169,7 @@ class Frame2(tk.Frame):
        self.add_new_frame1(camera, index)
 
     def remove_camera(self):
+        """Remove the selected camera."""
         selected = self.table.selection()
         if not selected:
             messagebox.showwarning("Select Camera", "Please select a camera to delete.")
@@ -234,14 +238,6 @@ class Frame3(tk.Frame):
             self.readme_button.config(text="Hide Details ▲")
             self.readme_visible = True
 
-"""
-=======================================
-Last Version: 
-Update the GUI part
-Connected to the home frame
-*** PowerShell information required
-=======================================
-"""
 class Frame4(tk.Frame):
     """Frame4: Progress monitor checking cameras information and images sent in 2 minutes"""
     def __init__(self, parent, switch_to_frame3):
