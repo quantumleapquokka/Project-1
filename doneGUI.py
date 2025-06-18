@@ -4,6 +4,7 @@ import re
 import webbrowser
 from tkinter import ttk, messagebox
 import subprocess
+from datetime import datetime
 camera_list = []
 frame1_list = []
 
@@ -63,8 +64,6 @@ class Frame1(tk.Frame):
         list_button.grid(row=4, column=1, padx=10, pady=10)
         home_button = tk.Button(self, text="↩ Back Home", width=20, command=self.switch_to_frame3)
         home_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky='w')
-        stop_button = tk.Button(self, text="Stop Monitoring", width=20, command=self.stop_powershell)
-        stop_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky='w')
 
     def add_camera(self):
         """Add a camera to the camera list."""
@@ -114,13 +113,6 @@ class Frame1(tk.Frame):
         except subprocess.CalledProcessError as e:
             print("Error running PowerShell script:", e)
 
-    def stop_powershell(self):
-        if self.ps_process and self.ps_process.poll() is None:
-            self.ps_process.terminate()
-            print("PowerShell script terminated.")
-        else:
-            messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
-
 class Frame2(tk.Frame):
     """Frame2: for displaying the list of cameras and allowing users to edit or remove them."""
     def __init__(self, parent, switch_to_frame1, switch_to_frame3, switch_to_frame4, add_new_frame1):
@@ -129,6 +121,7 @@ class Frame2(tk.Frame):
         self.switch_to_frame3 = switch_to_frame3
         self.add_new_frame1 = add_new_frame1
         self.switch_to_frame4 = switch_to_frame4
+        self.ps_process = None
         self.create_widgets()
 
     def create_widgets(self):
@@ -147,15 +140,26 @@ class Frame2(tk.Frame):
         tk.Button(self, text="Add a New Camera", command=self.add_new_frame1).grid(row=1, column=3, pady=10)
         tk.Button(self, text="↩ Back Home", command=self.switch_to_frame3).grid(row=2, column=0, pady=10)
         tk.Button(self, text="View Progress", command=self.switch_to_frame4).grid(row=2, column=1, pady=10)
+        tk.Button(self, text="Stop Monitoring 🛑", width=20, command=self.stop_powershell).grid(row=2, column=2, columnspan=2, padx=10, pady=10, sticky='w')
 
         self.update_camera_list()
-        
+
+    def stop_powershell(self):
+        """Stop the PowerShell script if it is running."""
+        if self.ps_process and self.ps_process.poll() is None:
+            self.ps_process.terminate()
+            print("PowerShell script terminated.")
+        else:
+            messagebox.showinfo("No Active Script", "No active monitoring process to stop.")
+
     def update_camera_list(self):
+        """Update the camera list in the table."""
         self.table.delete(*self.table.get_children())
         for cam in camera_list:
             self.table.insert("", "end", values=(cam['name'], cam['path'], cam['frequency'], cam['url']))
 
     def edit_camera(self):
+       """Edit the selected camera."""
        selected = self.table.selection()
        if not selected:
         messagebox.showwarning("No Selection", "Please select a camera to edit.")
@@ -165,6 +169,7 @@ class Frame2(tk.Frame):
        self.add_new_frame1(camera, index)
 
     def remove_camera(self):
+        """Remove the selected camera."""
         selected = self.table.selection()
         if not selected:
             messagebox.showwarning("Select Camera", "Please select a camera to delete.")
@@ -233,14 +238,6 @@ class Frame3(tk.Frame):
             self.readme_button.config(text="Hide Details ▲")
             self.readme_visible = True
 
-"""
-=======================================
-Last Version: 
-Update the GUI part
-Connected to the home frame
-*** PowerShell information required
-=======================================
-"""
 class Frame4(tk.Frame):
     """Frame4: Progress monitor checking cameras information and images sent in 2 minutes"""
     def __init__(self, parent, switch_to_frame3):
@@ -275,10 +272,34 @@ class Frame4(tk.Frame):
         back_button.pack(pady=10)
 
     def update_camera_list(self):
-        """Update the camera list in the treeview."""
         self.tree.delete(*self.tree.get_children())
         for cam in camera_list:
-            self.tree.insert("", "end", values=(cam['name'], cam['last_detected'], cam['created_on'], cam['images_sent']))
+            results_path = os.path.join(cam["path"], "results.txt")
+            last_detected = "-"
+            created_on = "-"
+            images_sent = 0
+
+            if os.path.exists(results_path):
+                try:
+                    with open(results_path, "r") as f:
+                        lines = f.readlines()
+                        created_on = lines[0].strip() if lines else "-"
+                        for line in lines:
+                            match = re.match(r"\[(.*?)\]", line)
+                            if match:
+                                last_detected = match.group(1)
+                            if "Fire Detection FOUND!" in line or "No detection." in line:
+                                images_sent += 1
+                except Exception as e:
+                    print(f"Failed to read {results_path}: {e}")
+
+            cam["last_detected"] = last_detected
+            cam["created_on"] = created_on
+            cam["images_sent"] = images_sent
+
+            self.tree.insert("", "end", values=(cam["name"], last_detected, created_on, images_sent))
+        self.after(5000, self.update_camera_list)  # Update every 5 seconds
+
 
 class LConnectApp:
     def __init__(self, root):
