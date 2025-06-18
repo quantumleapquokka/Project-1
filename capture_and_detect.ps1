@@ -54,7 +54,7 @@ while ($true) {
     if ($captureSnapshot) {
         try {
             $response = Invoke-RestMethod -Uri $apiUrl -Method Post -InFile $outputFile -ContentType "image/jpeg"
-            # Optional: Save API response to file for inspection
+            # Save API response to file for inspection
             $response | ConvertTo-Json -Depth 10 | Set-Content -Path $responsePath
 
             # Also optionally print to console
@@ -71,9 +71,21 @@ while ($true) {
         $postSuccess = $false
     }
 
-    # Optional: check for bounding box in response
+    # check for bounding box in response
     if ($postSuccess -and ($response | Out-String | Select-String -Pattern 'score' -Quiet)) {
         Add-Content -Path $resultsFile -Value "[$(Get-Date)] Iteration ${i}: Fire Detection FOUND!"
+
+        # Create 'positives' subfolder if it doesn't exist
+        $positivesFolder = Join-Path $FolderPath "positives"
+        if (!(Test-Path $positivesFolder)) {
+            New-Item -ItemType Directory -Path $positivesFolder | Out-Null
+        }
+
+        # Copy image to 'positives' folder with a timestamped name
+        $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $positiveImage = Join-Path $positivesFolder "positive_$timestamp.jpg"
+        Copy-Item -Path $outputFile -Destination $positiveImage
+
     } elseif ($postSuccess) {
         Add-Content -Path $resultsFile -Value "[$(Get-Date)] Iteration ${i}: No detection."
     }
