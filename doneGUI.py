@@ -248,6 +248,8 @@ class LConnectApp:
 
         self.show_frame3()
 
+        self.root.protocol("WM_DELETE_WINDOW", self.cleanup) # terminate on window close
+
     def show_frame1(self):
         self.frame2.update_camera_list()
         self.frame1.tkraise()
@@ -270,6 +272,15 @@ class LConnectApp:
     def show_frame4(self):
         self.frame2.update_camera_list()
         self.frame4.tkraise()
+
+    def cleanup(self):
+        if self.frame1.ps_process and self.frame1.ps_process.poll() is None:
+            try:
+                self.frame1.ps_process.terminate()
+                print("PowerShell script terminated on close.")
+            except Exception as e:
+                print("Error terminating PowerShell process:", e)
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
