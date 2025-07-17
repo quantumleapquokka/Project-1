@@ -13,12 +13,12 @@ Write-Host "Saving output to $FolderPath"
 
 # --- Configuration ---
 $username = "root"
-$password = "Cashflow108!"
+$password = "Password"
 $cameraUrl = "http://demo.customer.roboticscats.com:55758/axis-cgi/jpg/image.cgi?resolution=1920x1080"
 $outputFile = Join-Path $FolderPath "capture.jpg"
 $responsePath = Join-Path $FolderPath "last-response.json"
 $resultsFile = Join-Path $FolderPath "results.txt"
-$apiUrl = $ApiURL # "https://lax.pop.roboticscats.com/api/detects?apiKey=6b4b4551f987d18b70ca53c1975c4fd3"
+$apiUrl = $ApiURL
 
 # --- Initialize ---
 $startTime = Get-Date
